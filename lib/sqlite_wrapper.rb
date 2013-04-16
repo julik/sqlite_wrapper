@@ -33,7 +33,6 @@ class SQLiteWrapper
   def with_db_conn
     connect!
     set_timezone!
-    apply_logger!
     yield
   ensure
     disconnect!
