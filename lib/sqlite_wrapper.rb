@@ -31,11 +31,13 @@ class SQLiteWrapper
   # Runs a block with an open SQLite database and ensures the database is closed
   # at the end
   def with_db_conn
-    connect!
-    set_timezone!
-    yield
-  ensure
-    disconnect!
+    begin
+      connect!
+      set_timezone!
+      yield
+    ensure
+      disconnect!
+    end
   end
   
   # Disconnects ActiveRecord from the file
@@ -46,7 +48,11 @@ class SQLiteWrapper
   # errors at some point.
   def disconnect!
     # http://stackoverflow.com/questions/9411344/
-    ActiveRecord::Base.connection_pool.disconnect!
+    begin
+      ActiveRecord::Base.connection_pool.disconnect!
+    rescue ActiveRecord::ConnectionNotEstablished => e
+      # Never used
+    end
   end
   
   # Configures AR for UTC time
