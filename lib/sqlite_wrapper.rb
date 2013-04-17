@@ -2,12 +2,15 @@
 class SQLiteWrapper
   EXT = ".sqlite"
   
+  attr_reader :app
+  
   # Used when the wrapper is run within a Rack pipeline
   def initialize(app = nil)
     @app = app
   end
   
-  # Returns the name of the current evironemtn (used for composing the database name)
+  # Returns the name of the current Rack environment
+  # or "development" if it's undefined
   def environment_name
     ENV['RACK_ENV'] || 'development'
   end
@@ -20,7 +23,7 @@ class SQLiteWrapper
   def call(env)
     raise "@app should be set for  Database#call to work" unless @app
     apply_logger!(env)
-    in_transaction { @app.call(env.merge('datbaase' => self)) }
+    in_transaction { @app.call(env.merge('database' => self)) }
   end
   
   # Runs the block in a transaction and with an open DB
@@ -48,11 +51,7 @@ class SQLiteWrapper
   # errors at some point.
   def disconnect!
     # http://stackoverflow.com/questions/9411344/
-    begin
-      ActiveRecord::Base.connection_pool.disconnect!
-    rescue ActiveRecord::ConnectionNotEstablished => e
-      # Never used
-    end
+    ActiveRecord::Base.connection_pool.disconnect! if ActiveRecord::Base.connection_pool.active_connection?
   end
   
   # Configures AR for UTC time
@@ -73,10 +72,7 @@ class SQLiteWrapper
   
   # Return the path to the database you want to open from here
   def path_to_database
-    db_filename = [environment_name, EXT].join # unsafe
-    db_path = File.join(File.expand_path(File.dirname(__FILE__)), '..', db_filename)
-    raise "Cannot find the DB file at #{db_path.inspect}" unless File.exist?(db_path)
-    db_path
+    raise "You need to override path_to_database for now to return the absolute path"
   end
   
   # Returns the UTCZ suffix for the backup file that we can make for the current

@@ -5,6 +5,9 @@ profiler_calls.html
 coverage
 coverage.data
 
+# test db
+test/db.sqlite
+
 # rdoc generated
 rdoc
 
