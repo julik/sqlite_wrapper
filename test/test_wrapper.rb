@@ -14,6 +14,11 @@ class TestWrapper < Test::Unit::TestCase
     def path_to_database
       File.dirname(__FILE__) + "/db.sqlite"
     end
+    
+    def path_to_migrations
+      # Update the database
+      mig_path = File.dirname(__FILE__) + '/migrations'
+    end
   end
   
   def test_raises_without_database_path_override
@@ -21,6 +26,37 @@ class TestWrapper < Test::Unit::TestCase
       p = Proc.new {}
       SQLiteWrapper.new(p).call({})
     end
+  end
+  
+  def test_raises_without_migration_path_override
+    assert_raise(RuntimeError) do
+      SQLiteWrapper.new.migrate!
+    end
+  end
+  
+  def test_backup_within_a_request
+    lam = lambda do | env |
+      db = env['database']
+      assert_nothing_raised { db.backup! }
+      backups = Dir.glob(File.dirname(__FILE__) + "/*_bak_*.sqlite")
+      assert_equal 1, backups.length, "Should have created one backup"
+    end
+    
+    W.new(lam).call({})
+  ensure
+    Dir.glob(File.dirname(__FILE__) + "/*_bak_*.sqlite").each do | f |
+      File.unlink(f)
+    end
+  end
+  
+  def test_migrate_within_a_request
+    lam = lambda do | env |
+      db = env['database']
+      assert_nothing_raised { db.migrate! }
+      raise "Total failure"
+    end
+    
+    W.new(lam).call({})
   end
   
   def test_call_propagates_to_app
@@ -31,8 +67,7 @@ class TestWrapper < Test::Unit::TestCase
       app_has_been_called = true
     end
     
-    w = W.new(lam)
-    w.call({})
+    W.new(lam).call({})
     assert app_has_been_called
   end
   

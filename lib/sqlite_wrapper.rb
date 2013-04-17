@@ -21,7 +21,7 @@ class SQLiteWrapper
   # have a transaction going and, say, run a backup
   # within it. We don't have to switch anything.
   def call(env)
-    raise "@app should be set for  Database#call to work" unless @app
+    raise "@app should be set for 'Database#call` to work" unless @app
     apply_logger!(env)
     in_transaction { @app.call(env.merge('database' => self)) }
   end
@@ -34,24 +34,11 @@ class SQLiteWrapper
   # Runs a block with an open SQLite database and ensures the database is closed
   # at the end
   def with_db_conn
-    begin
-      connect!
+    connect!
+    ActiveRecord::Base.connection_pool.with_connection do | c |
       set_timezone!
       yield
-    ensure
-      disconnect!
     end
-  end
-  
-  # Disconnects ActiveRecord from the file
-  # We need to do this because otherwise Ar tries to recycle
-  # the connections through it's connection pool - which is useless
-  # with SQLite since SQLite reuses the same connection per process anyway.
-  # If you don't disconnect you will get "prepare called on a closed database"
-  # errors at some point.
-  def disconnect!
-    # http://stackoverflow.com/questions/9411344/
-    ActiveRecord::Base.connection_pool.disconnect! if ActiveRecord::Base.connection_pool.active_connection?
   end
   
   # Configures AR for UTC time
@@ -89,7 +76,8 @@ class SQLiteWrapper
   # logging semantics
   def backup!
     basename = File.basename(path_to_database, EXT)
-    dest_db_path = [basename, get_backup_suffix, EXT].join
+    dest_db_filename = [basename, get_backup_suffix, EXT].join
+    dest_db_path = File.join(File.dirname(path_to_database), dest_db_filename)
     
     # Note that the manual sez
     # "It cannot be used to copy data to or from in-memory databases."
@@ -114,8 +102,7 @@ class SQLiteWrapper
   
   # Return the path to your migrations directory from here
   def path_to_migrations
-    # Update the database
-    mig_path = File.dirname(__FILE__) + '/migrations'
+    raise "You should override path_to_migrations"
   end
   
   # Run the migrations in transaction.
