@@ -56,7 +56,9 @@ class TestWrapper < Test::Unit::TestCase
       raise "Total failure"
     end
     
-    W.new(lam).call({})
+    assert_raise(RuntimeError) do
+      W.new(lam).call({})
+    end
   end
   
   def test_call_propagates_to_app

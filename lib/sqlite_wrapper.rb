@@ -23,7 +23,7 @@ class SQLiteWrapper
   def call(env)
     raise "@app should be set for 'Database#call` to work" unless @app
     apply_logger!(env)
-    in_transaction { @app.call(env.merge('database' => self)) }
+    with_db_conn { @app.call(env.merge('database' => self)) }
   end
   
   # Runs the block in a transaction and with an open DB
@@ -109,7 +109,9 @@ class SQLiteWrapper
   # Path to the migrations will be fetched via path_to_migrations
   def migrate!
     in_transaction do
-      ActiveRecord::Migration.suppress_messages { ActiveRecord::Migrator.migrate(path_to_migrations, nil) }
+      ActiveRecord::Migration.suppress_messages do
+        ActiveRecord::Migrator.migrate(path_to_migrations, nil)
+      end
     end
   end
 end
