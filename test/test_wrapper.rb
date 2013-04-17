@@ -74,13 +74,16 @@ class TestWrapper < Test::Unit::TestCase
   end
   
   def test_disconnects_after_request
+    app_has_been_called = false
     lam = lambda do | env |
       pool = ActiveRecord::Base.connection_pool
       assert pool.active_connection?
+      app_has_been_called = true
     end
     
     W.new(lam).call({})
     pool = ActiveRecord::Base.connection_pool
     assert !pool.active_connection?
+    assert app_has_been_called
   end
 end
