@@ -1,6 +1,7 @@
 # A lean mean machine SQLite toolbelt for small apps
 class SQLiteWrapper
   EXT = ".sqlite"
+  BUSY_TIMEOUT = 2000
   
   attr_reader :app
   
@@ -36,6 +37,7 @@ class SQLiteWrapper
   def with_db_conn
     connect!
     ActiveRecord::Base.connection_pool.with_connection do | c |
+      raise_timeout_on(c)
       set_timezone!
       yield
     end
@@ -69,6 +71,12 @@ class SQLiteWrapper
     dest_suffix = "_bak_#{stamp}"
   end
   
+  # Enforce a higher timeout on the AR connection
+  def raise_timeout_on(ar_conn)
+    conn = ar_conn.instance_variable_get('@connection')
+    conn.busy_timeout(1000)
+  end
+    
   # Run a SQLite backup. creates a suffixed file next to the
   # database file we backup from. This isolates the hairy
   # syntax of the Sqlite3 backup API. And it's cleaner than
