@@ -28,6 +28,10 @@ class TestWrapper < Test::Unit::TestCase
     end
   end
   
+  def test_waits_until_lock_is_released
+    flunk
+  end
+  
   def test_raises_without_migration_path_override
     assert_raise(RuntimeError) do
       SQLiteWrapper.new.migrate!

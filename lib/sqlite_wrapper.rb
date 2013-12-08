@@ -37,7 +37,6 @@ class SQLiteWrapper
   def with_db_conn
     connect!
     ActiveRecord::Base.connection_pool.with_connection do | c |
-      raise_timeout_on(c)
       set_timezone!
       yield
     end
@@ -54,9 +53,16 @@ class SQLiteWrapper
     ActiveRecord::Base.logger = logger if logger
   end
   
+  # Get the timeout in musecs
+  def default_timeout
+    BUSY_TIMEOUT
+  end
+  
   # Connects ActiveRecord to the file
   def connect!
-    ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: path_to_database)
+    ActiveRecord::Base.establish_connection(adapter: 'sqlite3', 
+      database: path_to_database,
+      timeout: default_timeout)
   end
   
   # Return the path to the database you want to open from here
@@ -71,12 +77,6 @@ class SQLiteWrapper
     dest_suffix = "_bak_#{stamp}"
   end
   
-  # Enforce a higher timeout on the AR connection
-  def raise_timeout_on(ar_conn)
-    conn = ar_conn.instance_variable_get('@connection')
-    conn.busy_timeout(1000)
-  end
-    
   # Run a SQLite backup. creates a suffixed file next to the
   # database file we backup from. This isolates the hairy
   # syntax of the Sqlite3 backup API. And it's cleaner than
