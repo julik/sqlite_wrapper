@@ -1,7 +1,7 @@
 # A lean mean machine SQLite toolbelt for small apps
 class SQLiteWrapper
   EXT = ".sqlite"
-  BUSY_TIMEOUT = 2000
+  BUSY_TIMEOUT = 6000
   
   attr_reader :app
   
