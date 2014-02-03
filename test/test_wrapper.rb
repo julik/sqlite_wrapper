@@ -1,10 +1,10 @@
 require 'bundler'
+require 'test/unit'
 Bundler.require :development
-require 'minitest/autorun'
 
 require_relative '../lib/sqlite_wrapper'
 
-class TestWrapper < Minitest::Test
+class TestWrapper < Test::Unit::TestCase
   def test_saves_app_into_ivar
     w = SQLiteWrapper.new(:some_app)
     assert_equal :some_app, w.app
@@ -22,7 +22,7 @@ class TestWrapper < Minitest::Test
   end
   
   def test_raises_without_database_path_override
-    assert_raises RuntimeError do
+    assert_raise(RuntimeError) do
       p = Proc.new {}
       SQLiteWrapper.new(p).call({})
     end
@@ -33,7 +33,7 @@ class TestWrapper < Minitest::Test
   end
   
   def test_raises_without_migration_path_override
-    assert_raises RuntimeError do
+    assert_raise(RuntimeError) do
       SQLiteWrapper.new.migrate!
     end
   end
@@ -41,7 +41,7 @@ class TestWrapper < Minitest::Test
   def test_backup_within_a_request
     lam = lambda do | env |
       db = env['database']
-      db.backup!
+      assert_nothing_raised { db.backup! }
       backups = Dir.glob(File.dirname(__FILE__) + "/*_bak_*.sqlite")
       assert_equal 1, backups.length, "Should have created one backup"
     end
@@ -56,11 +56,11 @@ class TestWrapper < Minitest::Test
   def test_migrate_within_a_request
     lam = lambda do | env |
       db = env['database']
-      db.migrate!
+      assert_nothing_raised { db.migrate! }
       raise "Total failure"
     end
     
-    assert_raises RuntimeError do
+    assert_raise(RuntimeError) do
       W.new(lam).call({})
     end
   end
