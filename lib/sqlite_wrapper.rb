@@ -115,10 +115,10 @@ class SQLiteWrapper
   
   # Run the migrations in transaction.
   # Path to the migrations will be fetched via path_to_migrations
-  def migrate!
+  def migrate!(target_version = nil)
     in_transaction do
       ActiveRecord::Migration.suppress_messages do
-        ActiveRecord::Migrator.migrate(path_to_migrations, nil)
+        ActiveRecord::Migrator.migrate(path_to_migrations, target_version)
       end
     end
   end
