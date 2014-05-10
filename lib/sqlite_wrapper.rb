@@ -81,7 +81,7 @@ class SQLiteWrapper
   # database file we backup from. This isolates the hairy
   # syntax of the Sqlite3 backup API. And it's cleaner than
   # just copying the file since this plays nice with SQLite's
-  # logging semantics
+  # locking semantics
   def backup!
     basename = File.basename(path_to_database, EXT)
     dest_db_filename = [basename, get_backup_suffix, EXT].join
